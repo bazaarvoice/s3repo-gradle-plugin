@@ -12,7 +12,7 @@ public class S3RepoExtension {
     public boolean allowCreateRepo;
     public boolean forceDeploy;
     public String s3RepositoryUrl;
-    public String s3AcessKey;
+    public String s3AccessKey;
     public String s3SecretKey;
     public FileCollection inputs;
 }

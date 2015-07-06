@@ -10,8 +10,6 @@ import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.TaskAction;
 
-import java.io.IOException;
-
 /**
  * Created by louis.williams on 7/1/15.
  */
@@ -53,8 +51,8 @@ public class UpdateCreateTask extends DefaultTask {
     }
 
     private AmazonS3Client createS3Client() {
-        if (extension.s3AcessKey != null && extension.s3SecretKey != null) {
-            return new AmazonS3Client(new BasicAWSCredentials(extension.s3AcessKey, extension.s3SecretKey));
+        if (extension.s3AccessKey != null && extension.s3SecretKey != null) {
+            return new AmazonS3Client(new BasicAWSCredentials(extension.s3AccessKey, extension.s3SecretKey));
         } else {
             return new AmazonS3Client(new DefaultAWSCredentialsProviderChain());
         }

@@ -1,11 +1,23 @@
 group 'com.bazaarvoice.gradle'
-version '1.0'
+version '1.0.1'
+
+buildscript {
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath "com.gradle.publish:plugin-publish-plugin:0.9.0"
+    }
+}
 
 apply plugin: 'java'
 apply plugin: 'maven-publish'
+apply plugin: 'com.gradle.plugin-publish'
 
 repositories {
-    mavenCentral()
+    jcenter()
 }
 
 dependencies {
@@ -14,16 +26,44 @@ dependencies {
     compile gradleApi()
 }
 
+pluginBundle {
+    website = 'https://github.com/louiswilliams/s3repo-gradle-plugin'
+    vcsUrl = 'https://github.com/louiswilliams/s3repo-gradle-plugin'
+    description = 'Plugin to deploy to an S3 Yum repository'
+    tags = ['s3', 'repo', 'yum', 'repository', 'deploy']
+
+    plugins {
+        s3RepoPlugin {
+            id = 'com.bazaarvoice.s3repo'
+            displayName = 'S3 Yum Repo Deploy Plugin'
+        }
+    }
+}
+
 publishing {
     publications {
         mavenJava(MavenPublication) {
+            pom.withXml {
+                asNode().appendNode('parent').with {
+                    appendNode('groupId', 'com.bazaarvoice.commons')
+                    appendNode('artifactId', 'bv-super-pom')
+                    appendNode('version', '1.11')
+                    appendNode('relativePath')
+                }
+            }
+
             from components.java
         }
     }
 }
+
 publishing {
     repositories {
-        mavenLocal()
+        mavenCentral()
     }
 }
 
+/* Because the maven-publish plugin doesn't read settings.xml, we run 'mvn deploy' manually */
+task deploy(type:Exec, dependsOn: 'generatePomFileForMavenJavaPublication') {
+    commandLine 'mvn', 'deploy', '-f', 'build/publications/mavenJava/pom-default.xml'
+}
