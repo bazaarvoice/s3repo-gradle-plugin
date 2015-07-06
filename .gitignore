@@ -1,0 +1,19 @@
+build/
+.gradle/
+/gradle/
+*.jar
+
+# Mac files
+.DS_Store
+
+*.hprof
+
+# IntelliJ files
+*.iml
+.idea/
+*.ipr
+*.iws
+
+# Maven artifacts
+target/
+dependency-reduced-pom.xml
