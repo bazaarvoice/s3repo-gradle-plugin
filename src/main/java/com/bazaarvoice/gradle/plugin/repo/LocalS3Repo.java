@@ -18,10 +18,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by louis.williams on 7/2/15.
@@ -40,6 +37,7 @@ public class LocalS3Repo {
     private S3RepositoryPath s3RepositoryPath;
     private String stagingDirectory;
     private boolean allowCreateRepo;
+    private List<File> synthesizedFiles;
 
     public LocalS3Repo(AmazonS3Client s3Client, S3RepositoryPath s3RepositoryPath, String stagingDirectory, boolean allowCreate) {
         this.s3Client = s3Client;
@@ -81,6 +79,39 @@ public class LocalS3Repo {
         /* Delete staging directory */
 //        cleanUpStage();
 
+    }
+
+    public void uploadToRepo(boolean noUpload) throws IOException {
+
+        /* Clean synthesized before upload */
+        cleanSynthesizedFiles();
+
+        /* Do upload to S3 */
+        Collection<File> stagedFiles = FileUtils.listFiles(new File(stagingDirectory), null, true);
+
+        for (File file : stagedFiles) {
+            String bucketKey = getBucketKeyPath(file);
+
+            PutObjectRequest request = new PutObjectRequest(s3RepositoryPath.getBucketName(), bucketKey, file);
+
+            log.info("Uploading  " + file + " => s3://" + s3RepositoryPath.getBucketName() + "/" + bucketKey);
+
+            if (!noUpload) {
+                s3Client.putObject(request);
+            }
+        }
+
+    }
+
+    public String getBucketKeyPath(File file) throws IOException {
+
+        /* Remove the canonical part of the path, and then the filename to get just the folder key */
+        String stagingPath = new File(stagingDirectory).getCanonicalPath();
+        String fullKey = file.getCanonicalPath().replace(stagingPath, "");
+        if (fullKey.startsWith("/")) {
+            fullKey = fullKey.substring(1);
+        }
+        return fullKey;
     }
 
     public void updateOrCreateRemoteRepo() throws IOException {
@@ -139,12 +170,21 @@ public class LocalS3Repo {
 
     public void stageInputFiles(FileCollection files, boolean force) throws IOException {
         for (File inputFile : files) {
-            File destination = new File(stagingDirectory + "/" + s3RepositoryPath.getFolderPath(), inputFile.getName());
+            File destination = new File(stagingDirectory + "/" + s3RepositoryPath.getFolderPath(), inputFile.getName()).getCanonicalFile();
 
             log.info("Copying " + inputFile + " => " + destination);
 
-            if (destination.isFile() && !force) {
-                throw new IOException("Deploying file '" + destination.getName() + "' that exists in repo, and forceDeploy is not set to true");
+            /* If we try to stage a file that already exist, and the force option is true, remove it from the synthesized files so we upload it later*/
+            if (destination.isFile()) {
+                log.info("File exists in repo already: " + destination);
+                if (force) {
+                    log.info("  Overwriting...");
+                    if (!synthesizedFiles.remove(destination)) {
+                        throw new IllegalStateException("Tried to remove file from synthesized list, but it wasn't there");
+                    }
+                } else {
+                    throw new IOException("Attempting to deploy file '" + destination.getName() + "' that exists in repo, and forceDeploy is not set to true");
+                }
             }
             FileUtils.copyFile(inputFile, destination);
         }
@@ -177,7 +217,7 @@ public class LocalS3Repo {
 
             try {
                 File targetFile = new File(stagingDirectory, relativePath);
-                log.info("Downloading: " + s3RepositoryPath + "/" + relativePath + " => " + targetFile);
+                log.info("Downloading: " + s3RepositoryPath.getBucketName() + "/" + relativePath + " => " + targetFile);
                 FileUtils.touch(targetFile);
 
                 final S3ObjectInputStream objectContent = object.getObjectContent();
@@ -200,6 +240,15 @@ public class LocalS3Repo {
 
     }
 
+    private void cleanSynthesizedFiles() throws IOException {
+        for (File synthesized : synthesizedFiles) {
+            log.info("Removing synthesized " + synthesized + " before upload to repo");
+            if (!synthesized.delete()) {
+                throw new IOException("Failed to delete file " + synthesized);
+            }
+        }
+    }
+
     private void synthesizeRepositoryFiles(File metadataFile) throws Exception {
 
         /* Parse repomd.xml file */
@@ -210,6 +259,10 @@ public class LocalS3Repo {
 
         /* Get file list */
         List<String> localFiles = parseFileListFromPrimaryMetadata(primaryXml);
+
+        /* Keep track of remote files that don't actually exist locally */
+        synthesizedFiles = new ArrayList<File>();
+
 
         log.info("Files (" + localFiles.size() + ")");
 
@@ -250,11 +303,13 @@ public class LocalS3Repo {
 
         // for each file in our repoRelativeFilePathList, touch/synthesize the file
         for (String repoRelativeFilePath : localFiles) {
-            File file = new File(stagingDirectory + "/" + s3RepositoryPath.getFolderPath(), repoRelativeFilePath);
+            File file = new File(stagingDirectory + "/" + s3RepositoryPath.getFolderPath(), repoRelativeFilePath).getCanonicalFile();
             if (file.exists()) {
                 throw new RuntimeException("Repo already has this file: " + file.getPath());
             }
             FileUtils.touch(file);
+            log.info("Synthesizing " + file);
+            synthesizedFiles.add(file);
         }
     }
 
@@ -307,7 +362,11 @@ public class LocalS3Repo {
     private void cleanUpStage() {
         try {
             log.info("Deleting directory " + stagingDirectory);
-            FileUtils.deleteDirectory(new File(stagingDirectory));
+            if (new File(stagingDirectory).exists()) {
+                FileUtils.deleteDirectory(new File(stagingDirectory));
+            } else {
+                log.info("Directory doesn't exist");
+            }
         } catch (IOException e) {
             log.error("Could not clean staging directory: " + e.getMessage());
         }

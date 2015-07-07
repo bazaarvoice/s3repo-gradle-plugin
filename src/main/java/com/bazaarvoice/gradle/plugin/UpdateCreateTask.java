@@ -45,9 +45,14 @@ public class UpdateCreateTask extends DefaultTask {
         s3RepoStage.stageInputFiles(extension.inputs, extension.forceDeploy);
 
         /* Update or create remote repo */
-        s3RepoStage.updateOrCreateRemoteRepo();
+        if (!extension.skipUpdate) {
+            s3RepoStage.updateOrCreateRemoteRepo();
+        } else {
+            log.info("Skipping update repo metadata");
+        }
 
-
+        /* Do upload */
+        s3RepoStage.uploadToRepo(extension.skipUpload);
     }
 
     private AmazonS3Client createS3Client() {
