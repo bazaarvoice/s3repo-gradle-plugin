@@ -71,7 +71,7 @@ This task updates a repository, and creates it if *allowCreateRepository* is tru
         inputs = buildRpm.outputs.files
     }
 
-    s3repo.dependsOn = buildRpm.outputs
+    publishToS3Repo.dependsOn = buildRpm.outputs
 
 **Command line**
 
