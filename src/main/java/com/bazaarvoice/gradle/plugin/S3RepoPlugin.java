@@ -12,6 +12,6 @@ public class S3RepoPlugin implements Plugin<Project> {
         project.getExtensions().create("s3repo", S3RepoExtension.class);
 
         /* Create task */
-        project.getTasks().create("updateCreate", UpdateCreateTask.class);
+        project.getTasks().create("publishToS3Repo", UpdateRepoTask.class);
     }
 }

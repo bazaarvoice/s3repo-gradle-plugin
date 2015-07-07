@@ -13,11 +13,11 @@ import org.gradle.api.tasks.TaskAction;
 /**
  * Created by louis.williams on 7/1/15.
  */
-public class UpdateCreateTask extends DefaultTask {
+public class UpdateRepoTask extends DefaultTask {
 
     private static final String STAGING_DIRECTORY = "_s3repo_staging";
 
-    private static Logger log = Logging.getLogger(UpdateCreateTask.class.getName());
+    private static Logger log = Logging.getLogger(UpdateRepoTask.class.getName());
 
     private S3RepoExtension extension;
     private S3RepositoryPath repositoryPath;
@@ -26,7 +26,7 @@ public class UpdateCreateTask extends DefaultTask {
     private LocalS3Repo s3RepoStage;
 
     @TaskAction
-    public void updateCreate() throws Exception {
+    public void publishToS3Repo() throws Exception {
 
         /* Get extension */
         extension = (S3RepoExtension) getProject().getExtensions().getByName("s3repo");

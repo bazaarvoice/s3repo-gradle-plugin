@@ -11,6 +11,7 @@ import java.util.Collection;
 public class S3RepoExtension {
     public boolean allowCreateRepo;
     public boolean forceDeploy;
+    public boolean recreateRepo;
     public boolean skipUpload;
     public boolean skipUpdate;
     public String s3RepositoryUrl;
