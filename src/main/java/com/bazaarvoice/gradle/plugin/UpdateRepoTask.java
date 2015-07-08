@@ -46,7 +46,7 @@ public class UpdateRepoTask extends DefaultTask {
 
         /* Update or create remote repo */
         if (!extension.skipUpdate) {
-            s3RepoStage.updateOrCreateRemoteRepo();
+            s3RepoStage.updateOrCreateRemoteRepo(extension.createRepoArgs);
         } else {
             log.info("Skipping update repo metadata");
         }

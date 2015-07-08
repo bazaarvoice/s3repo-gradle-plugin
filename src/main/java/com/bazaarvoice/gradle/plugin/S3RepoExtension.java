@@ -18,4 +18,5 @@ public class S3RepoExtension {
     public String s3AccessKey;
     public String s3SecretKey;
     public FileCollection inputs;
+    public String createRepoArgs;
 }

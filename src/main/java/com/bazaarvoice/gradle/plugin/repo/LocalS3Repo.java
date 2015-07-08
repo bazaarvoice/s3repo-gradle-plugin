@@ -37,7 +37,7 @@ public class LocalS3Repo {
     private S3RepositoryPath s3RepositoryPath;
     private String stagingDirectory;
     private boolean allowCreateRepo;
-    private List<File> stagedForUpload;
+    private List<File> synthesizedFiles;
 
     public LocalS3Repo(AmazonS3Client s3Client, S3RepositoryPath s3RepositoryPath, String stagingDirectory, boolean allowCreate) {
         this.s3Client = s3Client;
@@ -55,7 +55,7 @@ public class LocalS3Repo {
             downloadMetadataToStaging();
 
             /* We want to add files that we will end re-uploading here */
-            stagedForUpload = new ArrayList<File>();
+            synthesizedFiles = new ArrayList<File>();
 
             /* Get the metadata file from staging */
             File metaData = getRepoMetadataFile();
@@ -90,11 +90,12 @@ public class LocalS3Repo {
 
     public void uploadToRepo(boolean noUpload) throws IOException {
 
+        cleanSynthesizedFiles();
 
         /* Do upload to S3 */
-//        Collection<File> stagedFiles = FileUtils.listFiles(new File(stagingDirectory), null, true);
+        Collection<File> stagedFiles = FileUtils.listFiles(new File(stagingDirectory), null, true);
 
-        for (File file : stagedForUpload) {
+        for (File file : stagedFiles) {
             String bucketKey = getBucketKeyPath(file);
 
             PutObjectRequest request = new PutObjectRequest(s3RepositoryPath.getBucketName(), bucketKey, file);
@@ -121,19 +122,19 @@ public class LocalS3Repo {
         return fullKey;
     }
 
-    public void updateOrCreateRemoteRepo() throws IOException {
+    public void updateOrCreateRemoteRepo(String createRepoArgs) throws IOException {
         if (!getRepoMetadataFile().isFile()) {
             if (allowCreateRepo) {
-                updateRemoteRepo(true);
+                updateRemoteRepo(createRepoArgs, true);
             } else {
                 throw new RuntimeException("Repo doesn't exist and allowCreateRepo not set to true");
             }
         } else {
-            updateRemoteRepo(false);
+            updateRemoteRepo(createRepoArgs, false);
         }
     }
 
-    private void updateRemoteRepo(boolean allowCreate) throws IOException {
+    private void updateRemoteRepo(String createRepoArgs, boolean allowCreate) throws IOException {
         Runtime runtime = Runtime.getRuntime();
 
         String command = CREATE_REPO_COMMAND;
@@ -141,7 +142,11 @@ public class LocalS3Repo {
         String inputDirectory = stagingDirectory + "/" + s3RepositoryPath.getFolderPath();
 
         if (!allowCreate) {
-            command += "--update --skip-stat ";
+            command += "--update ";
+//            command += "--update --skip-stat ";
+        }
+        if (createRepoArgs != null) {
+            command += createRepoArgs + " ";
         }
         command += inputDirectory;
 
@@ -168,15 +173,6 @@ public class LocalS3Repo {
                 throw new RuntimeException(command + " returned: " + result);
             }
 
-            stagedForUpload.add(getRepoMetadataFile());
-
-            Document repoMetadata = XmlUtils.parseXmlFile(getRepoMetadataFile());
-
-            for (String fileType : YUM_REPODATA_FILE_TYPES) {
-                File metaFile = resolveMetadataFile(fileType, repoMetadata);
-                stagedForUpload.add(metaFile);
-            }
-
         } catch (Exception e) {
             throw new RuntimeException("Unable to execute: " + command, e);
         }
@@ -200,7 +196,8 @@ public class LocalS3Repo {
                     throw new IOException("Attempting to deploy file '" + destination.getName() + "' that exists in repo, and forceDeploy is not set to true");
                 }
             }
-            stagedForUpload.add(destination);
+            synthesizedFiles.remove(destination);
+
             FileUtils.copyFile(inputFile, destination);
         }
     }
@@ -255,14 +252,14 @@ public class LocalS3Repo {
 
     }
 
-//    private void cleanSynthesizedFiles() throws IOException {
-//        for (File synthesized : synthesizedFiles) {
-//            log.info("Removing synthesized " + synthesized + " before upload to repo");
-//            if (!synthesized.delete()) {
-//                throw new IOException("Failed to delete file " + synthesized);
-//            }
-//        }
-//    }
+    private void cleanSynthesizedFiles() throws IOException {
+        for (File synthesized : synthesizedFiles) {
+            log.info("Removing synthesized " + synthesized + " before upload to repo");
+            if (!synthesized.delete()) {
+                throw new IOException("Failed to delete file " + synthesized);
+            }
+        }
+    }
 
     private void synthesizeRepositoryFiles(File metadataFile) throws Exception {
 
@@ -315,6 +312,7 @@ public class LocalS3Repo {
                 throw new RuntimeException("Repo already has this file: " + file.getPath());
             }
             FileUtils.touch(file);
+            synthesizedFiles.add(file);
             log.info("Synthesizing " + file);
         }
     }
