@@ -142,8 +142,7 @@ public class LocalS3Repo {
         String inputDirectory = stagingDirectory + "/" + s3RepositoryPath.getFolderPath();
 
         if (!allowCreate) {
-            command += "--update ";
-//            command += "--update --skip-stat ";
+            command += "--update --skip-stat ";
         }
         if (createRepoArgs != null) {
             command += createRepoArgs + " ";
