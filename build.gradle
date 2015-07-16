@@ -1,5 +1,5 @@
 group 'com.bazaarvoice.gradle'
-version '1.0.7'
+version '1.0.8'
 
 buildscript {
     repositories {
@@ -30,15 +30,15 @@ dependencies {
 }
 
 pluginBundle {
-    website = 'https://github.com/louiswilliams/s3repo-gradle-plugin'
-    vcsUrl = 'https://github.com/louiswilliams/s3repo-gradle-plugin'
-    description = 'Plugin to deploy to an S3 Yum repository'
-    tags = ['s3', 'repo', 'yum', 'repository', 'deploy']
+    website = 'https://github.com/bazaarvoice/s3repo-gradle-plugin'
+    vcsUrl = 'https://github.com/bazaarvoice/s3repo-gradle-plugin'
+    description = 'Plugin to publish to an S3 Yum repository'
+    tags = ['s3', 'repo', 'yum', 'repository', 'publish']
 
     plugins {
         s3RepoPlugin {
             id = 'com.bazaarvoice.s3repo'
-            displayName = 'S3 Yum Repo Deploy Plugin'
+            displayName = 'S3 Yum Repo Publish Plugin'
         }
     }
 }

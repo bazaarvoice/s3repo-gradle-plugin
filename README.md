@@ -1,6 +1,6 @@
 # S3 Repo Gradle Plugin
 
-This plugin is strongly based off of [s3repo-maven-plugin](https://github.com/bazaarvoice/s3repo-maven-plugin), and lets you deploy resources to a private RPM repository hosted on Amazon S3.
+This plugin is strongly based off of [s3repo-maven-plugin](https://github.com/bazaarvoice/s3repo-maven-plugin), and lets you publish resources to a private RPM repository hosted on Amazon S3.
 
 ## Requirements
 
@@ -18,7 +18,7 @@ The following is a full configuration example for *build.gradle*:
         s3AccessKey = "ACCESS-KEY"                                  // Overrides the default AWS provider chain
         s3SecretKey = "SECRET-KEY"                                  // Overrides the default AWS provider chain 
         allowCreateRepository = false                               // Default. Creates repo metadata if it doesn't exist 
-        forceDeploy = false                                         // Default. Overwrites already-deployed packages
+        forcePublish = false                                         // Default. Overwrites already-publish packages
         skipUpdate = false                                          // Default. Skips updating the repository metadata
         skipUpload = false                                          // Default. Skips the upload to S3
     }
@@ -32,18 +32,19 @@ This task updates a repository, and creates it if *allowCreateRepository* is tru
 * Upload staged input files and regenerated metadata files to S3
 * *skipUpdate* skips regenerating the metadata
 * *skipUpload* skips uploading the staged files
-* *forceDeploy* overwrites files that already exist in the repository
+* *forcePublish* overwrites files that already exist in the repository
 
 ## Example
 
 **build.gradle**
     
+```gradle
     group = 'com.example'
     description = """project"""
     
     plugins {
         id 'nebula.os-package' version '2.2.6'
-        id 'com.bazaarvoice.s3repo' version '1.0.4'
+        id 'com.bazaarvoice.s3repo' version '1.0.8'
     }
     
     apply plugin: 'java'
@@ -74,6 +75,7 @@ This task updates a repository, and creates it if *allowCreateRepository* is tru
     }
 
     publishToS3Repo.dependsOn = buildRpm.outputs
+```
 
 **Command line**
 

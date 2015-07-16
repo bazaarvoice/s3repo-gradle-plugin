@@ -42,7 +42,7 @@ public class UpdateRepoTask extends DefaultTask {
         s3RepoStage.verifyRepo();
 
         /* Stage our input files for upload */
-        s3RepoStage.stageInputFiles(extension.inputs, extension.forceDeploy);
+        s3RepoStage.stageInputFiles(extension.inputs, extension.forcePublish);
 
         /* Update or create remote repo */
         if (!extension.skipUpdate) {

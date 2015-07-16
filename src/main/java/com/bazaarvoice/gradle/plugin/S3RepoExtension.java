@@ -10,7 +10,7 @@ import java.util.Collection;
  */
 public class S3RepoExtension {
     public boolean allowCreateRepo;
-    public boolean forceDeploy;
+    public boolean forcePublish;
     public boolean recreateRepo;
     public boolean skipUpload;
     public boolean skipUpdate;

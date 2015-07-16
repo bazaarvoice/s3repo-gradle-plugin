@@ -192,7 +192,7 @@ public class LocalS3Repo {
                 if (force) {
                     log.info("  Overwriting...");
                 } else {
-                    throw new IOException("Attempting to deploy file '" + destination.getName() + "' that exists in repo, and forceDeploy is not set to true");
+                    throw new IOException("Attempting to deploy file '" + destination.getName() + "' that exists in repo, and forcePublish is not set to true");
                 }
             }
             synthesizedFiles.remove(destination);
