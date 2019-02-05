@@ -98,7 +98,8 @@ public class LocalS3Repo {
         for (File file : stagedFiles) {
             String bucketKey = getBucketKeyPath(file);
 
-            PutObjectRequest request = new PutObjectRequest(s3RepositoryPath.getBucketName(), bucketKey, file);
+            PutObjectRequest request = new PutObjectRequest(s3RepositoryPath.getBucketName(), bucketKey, file)
+                    .withCannedAcl(CannedAccessControlList.BucketOwnerFullControl);
 
             log.info("Uploading  " + file + " => s3://" + s3RepositoryPath.getBucketName() + "/" + bucketKey);
 
@@ -142,7 +143,7 @@ public class LocalS3Repo {
         String inputDirectory = stagingDirectory + "/" + s3RepositoryPath.getFolderPath();
 
         if (!allowCreate) {
-            command += "--update --skip-stat ";
+            command += "--update --skip-stat --simple-md-filenames ";
         }
         if (createRepoArgs != null) {
             command += createRepoArgs + " ";
