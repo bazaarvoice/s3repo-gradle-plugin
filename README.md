@@ -17,7 +17,7 @@ The following is a full configuration example for *build.gradle*:
         createRepoArgs = "--arg1 --arg2"                            // Extra arguments for the createrepo command
         s3AccessKey = "ACCESS-KEY"                                  // Overrides the default AWS provider chain
         s3SecretKey = "SECRET-KEY"                                  // Overrides the default AWS provider chain 
-        allowCreateRepository = false                               // Default. Creates repo metadata if it doesn't exist 
+        allowCreateRepo = false                               // Default. Creates repo metadata if it doesn't exist 
         forcePublish = false                                         // Default. Overwrites already-publish packages
         skipUpdate = false                                          // Default. Skips updating the repository metadata
         skipUpload = false                                          // Default. Skips the upload to S3
